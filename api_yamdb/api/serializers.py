@@ -2,6 +2,15 @@ from reviews.models import Category, Comment, Genre, Review, Title
 from rest_framework import serializers
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.shortcuts import get_object_or_404
+from users.models import User
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
 
 
 class ReviewSerializer(serializers.ModelSerializer):
