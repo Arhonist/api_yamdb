@@ -4,11 +4,11 @@ from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from django.db.models import Avg
 
 
-from .serializers import (CommentSerializer, ReviewSerializer, UserSerializer)
-from .permissions import IsAdmin
+from .serializers import (CommentSerializer, ReviewSerializer, UserSerializer,
+                          GenreSerializer, TitleSerializer, CategorySerializer)
+from .permissions import IsAdminOrModeratorOrReadOnly, IsAdmin
 from users.models import User, UserRole
 from reviews.models import Category, Genre, Review, Title
 
@@ -24,7 +24,7 @@ class UserViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     @action(
-        detail=False, 
+        detail=False,
         methods=['GET', 'PATCH'],
         permission_classes=(IsAuthenticated,)
     )
@@ -45,7 +45,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет ревью. При создании: тайтл из запроса, автор - текущий юзер."""
     serializer_class = ReviewSerializer
-    # permission_classes = классы пермишнов ещё не написаны
+    permission_classes = (IsAdminOrModeratorOrReadOnly,)
 
     def perform_create(self, serializer):
         serializer.save(
@@ -61,7 +61,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет коментов. Создание: ревью из запроса, автор - текущий юзер."""
     serializer_class = CommentSerializer
-    # permission_classes = классы пермишнов ещё не написаны
+    permission_classes = (IsAdminOrModeratorOrReadOnly,)
 
     def perform_create(self, serializer):
         serializer.save(
@@ -75,12 +75,15 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(rating=Avg('reviews__score')).all()
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
 
 
 class CategoryeViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
