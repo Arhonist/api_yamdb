@@ -1,4 +1,4 @@
-from rest_framework import permissions
+from rest_framework import permissions 
 
 from users.models import UserRole
 
@@ -15,7 +15,8 @@ class IsAdmin(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return (
-            request.user and request.user.is_authenticated and (
+            request.user and request.user.is_authenticated
+            and (
                 request.user.role == UserRole.ADMIN
                 or request.user.is_superuser
             )
