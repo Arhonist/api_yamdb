@@ -12,7 +12,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 from .serializers import (CommentSerializer, ReviewSerializer, UserSerializer,
                           GenreSerializer, TitleSerializer, CategorySerializer,
                           SignUpSerializer, TokenSerializer)
-from .permissions import IsAdminOrModeratorOrReadOnly, IsAdmin
+from .permissions import (IsAdminOrModeratorOrReadOnly, IsAdmin,
+                          IsAdminOrReadOnly)
 from users.models import User, UserRole
 from reviews.models import Category, Genre, Review, Title
 
@@ -141,13 +142,20 @@ class CommentViewSet(viewsets.ModelViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
-
-class CategoryeViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    filterset_fields = ('slug',)
+    search_fields = ('name',)
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    filterset_fields = ('slug',)
+    search_fields = ('name',)
