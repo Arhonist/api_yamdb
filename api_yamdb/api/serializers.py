@@ -4,6 +4,7 @@ from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 from django.db.models import Avg
+import datetime as dt
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -95,12 +96,8 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    genre = serializers.SlugRelatedField(
-        slug_field='slug', many=True, queryset=Genre.objects.all()
-    )
-    category = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Category.objects.all()
-    )
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
     rating = serializers.SerializerMethodField()
 
     class Meta:
@@ -109,3 +106,22 @@ class TitleSerializer(serializers.ModelSerializer):
 
     def get_rating(self, obj):
         return obj.reviews.aggregate(Avg('score'))['score__avg']
+
+
+class TitleCreateSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(
+        slug_field='slug', many=True, queryset=Genre.objects.all()
+    )
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Category.objects.all()
+    )
+
+    class Meta:
+        model = Title
+        fields = '__all__'
+
+    def validate_year(self, value):
+        current_year = dt.date.today().year
+        if value > current_year:
+            raise serializers.ValidationError('Некорректный год выхода!')
+        return value

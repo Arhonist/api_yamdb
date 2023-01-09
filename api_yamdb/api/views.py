@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
@@ -8,10 +8,12 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import AccessToken
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import (CommentSerializer, ReviewSerializer, UserSerializer,
                           GenreSerializer, TitleSerializer, CategorySerializer,
-                          SignUpSerializer, TokenSerializer)
+                          SignUpSerializer, TokenSerializer,
+                          TitleCreateSerializer)
 from .permissions import (IsAdminOrModeratorOrReadOnly, IsAdmin,
                           IsAdminOrReadOnly)
 from users.models import User, UserRole
@@ -141,8 +143,15 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    serializer_class = TitleSerializer
     permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('category', 'genre', 'name', 'year')
+
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return TitleSerializer
+        return TitleCreateSerializer
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -151,6 +160,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     filter_backends = (SearchFilter,)
     filterset_fields = ('slug',)
     search_fields = ('name',)
+
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
