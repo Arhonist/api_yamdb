@@ -1,20 +1,24 @@
-from rest_framework import viewsets, status
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
-from rest_framework.filters import SearchFilter
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.filters import SearchFilter
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-
-from .serializers import (CommentSerializer, ReviewSerializer, UserSerializer,
-                          GenreSerializer, TitleSerializer, CategorySerializer,
-                          SignUpSerializer, TokenSerializer)
-from .permissions import IsAdminOrModeratorOrReadOnly, IsAdmin
-from users.models import User, UserRole
 from reviews.models import Category, Genre, Review, Title
+from users.models import User, UserRole
+
+from .filters import TitleFilter
+from .permissions import (IsAdmin, IsAdminOrModeratorOrReadOnly,
+                          IsAdminOrReadOnly)
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer, SignUpSerializer,
+                          TitleCreateSerializer, TitleSerializer,
+                          TokenSerializer, UserSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -140,14 +144,29 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    serializer_class = TitleSerializer
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return TitleSerializer
+        return TitleCreateSerializer
 
 
-class CategoryeViewSet(viewsets.ModelViewSet):
+class CategoryGenreMixin(mixins.ListModelMixin, mixins.CreateModelMixin,
+                         mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    lookup_field = 'slug'
+    search_fields = ('name',)
+
+
+class CategoryViewSet(CategoryGenreMixin):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(CategoryGenreMixin):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer

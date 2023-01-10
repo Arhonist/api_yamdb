@@ -8,8 +8,11 @@ class Genre(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ['name']
 
 
 class Category(models.Model):
@@ -18,6 +21,9 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ['name']
 
 
 class Title(models.Model):
@@ -30,9 +36,13 @@ class Title(models.Model):
         null=True
     )
     year = models.IntegerField(verbose_name='Год релиза')
+    description = models.CharField(max_length=200, verbose_name='Описание')
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ['name']
 
 
 class Review(models.Model):
